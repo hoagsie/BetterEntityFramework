@@ -1,10 +1,9 @@
-﻿using System;
-using System.Data;
-using System.Linq;
+﻿using System.Linq;
 using BetterEntityFramework.Extensions;
 using BetterEntityFramework.StoreData;
 using Microsoft.EntityFrameworkCore;
 using Data = BetterEntityFramework.DataService;
+using IsolationLevel = System.Data.IsolationLevel;
 
 namespace BetterEntityFramework
 {
@@ -12,42 +11,34 @@ namespace BetterEntityFramework
     {
         private static void Main(string[] args)
         {
-            DisplayMenu();
-
-            string command;
-
-            while ((command = Console.ReadLine()) != "exit")
-            {
-                HandleCommand(command);
-            }
-        }
-
-        private static void HandleCommand(string command)
-        {
             var data = new Data();
-            
-            data.Service.Category.UpdateWhere(category => category.Publish == false, category => new Category {Publish = true}).Wait();
+
+            var newConfig = data.Configure().Builder.UseInMemoryDatabase();
+            data.UseConfiguration(newConfig);
+
+            // or
+
+            var options = new DataOptionsBuilder();
+            options.Builder.UseInMemoryDatabase();
+
+            data = new DataService(options);
+
+            data.Service.Category.UpdateWhere(category => category.Publish == false, category => new Category { Publish = true }).Wait();
             data.Service.Product.DeleteWhere(product => product.Publish == false).Wait();
-            data.Service.BulkInsert(data.Service.Category.Where(category => category.Publish)).Wait();
-            data.Service.Clear<Product>();
-            data.Service.ClearAll();
 
-            Console.WriteLine(command);
-        }
-
-        private static void DisplayMenu()
-        {
-            var menu = new[]
+            var restrictiveTransaction = new DataOptionsBuilder().Builder.UseSqlServer("connection string", builder => builder.ExecutionStrategy(context =>
             {
-                "[0] - Products",
-                "[1] - Bundles",
-                "[2] - Categories",
-                "[3] - Users",
-                "[4] - Baskets"
-            };
+                context.Context.Database.BeginTransaction(IsolationLevel.Serializable);
+                return context.Context.Database.CreateExecutionStrategy();
+            }));
 
-            Console.Write(string.Join(Environment.NewLine, menu) + Environment.NewLine);
-            Console.WriteLine("Enter Selection:");
+            using (var isolatedOperation = data.WithScopedService( restrictiveTransaction))
+            {
+                isolatedOperation.Service.User.DeleteWhere(user => user.Inactive).Wait();
+            }
+
+            data.Service.BulkInsert(data.Service.Category.Where(category => category.Publish), data.Service.CategorySubscription).Wait();
+            data.Service.ClearCache();
         }
     }
 }

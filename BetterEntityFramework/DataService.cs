@@ -1,9 +1,10 @@
-﻿using BetterEntityFramework.StoreData;
+﻿using System;
+using BetterEntityFramework.StoreData;
 using Microsoft.EntityFrameworkCore;
 
 namespace BetterEntityFramework
 {
-    internal class DataService
+    internal class DataService : IDisposable
     {
         private EfStoreContext _data;
         private DbContextOptions _lastOptions;
@@ -20,11 +21,18 @@ namespace BetterEntityFramework
                     return _data;
                 }
 
-                _lastOptions = DataOptionsBuilder.Build();
+                _lastOptions = new DataOptionsBuilder().Build();
                 _data = new EfStoreContext(_lastOptions);
 
                 return _data;
             }
+        }
+
+        public DataService() { }
+
+        public DataService(DataOptionsBuilder builder)
+        {
+            _lastOptions = builder.Build();
         }
 
         public DataOptionsBuilder Configure()
@@ -36,7 +44,7 @@ namespace BetterEntityFramework
         {
             _data?.Dispose();
 
-            _data = new EfStoreContext(builder.Options);
+            _data = new EfStoreContext(builder.Build());
         }
 
         public DataService WithScopedService()
@@ -51,6 +59,11 @@ namespace BetterEntityFramework
             var scopedService = new DataService();
             scopedService.UseConfiguration(builder);
             return scopedService;
+        }
+
+        public void Dispose()
+        {
+            _data?.Dispose();
         }
     }
 }

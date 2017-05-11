@@ -12,9 +12,14 @@ namespace BetterEntityFramework.Extensions
 {
     internal static class DbContextExtensions
     {
-        public static void ClearAll(this DbContext context)
+        public static void ClearCache<TEntity>(this DbContext context, IEnumerable<TEntity> selector)
         {
-            var entries = context.ChangeTracker.Entries();
+            if (selector == null)
+            {
+                throw new ArgumentNullException(nameof(selector));
+            }
+
+            var entries = context.ChangeTracker.Entries().Where(entry => selector.Any(entity => entry.Entity.Equals(entity)));
 
             foreach (var entry in entries)
             {
@@ -22,25 +27,14 @@ namespace BetterEntityFramework.Extensions
             }
         }
 
-        public static void Clear<TEntity>(this DbContext context, IEnumerable<TEntity> selector = null)
+        public static void ClearCache(this DbContext context)
         {
-            var entries = context.ChangeTracker.Entries();
-
-            if (selector != null)
-            {
-                entries = entries.Where(entry => selector.Any(entity => entry.Entity.Equals(entity)));
-            }
-
-            foreach (var entry in entries)
-            {
-                entry.State = EntityState.Detached;
-            }
+            ClearCache(context, context.ChangeTracker.Entries().Select(entry => entry.Entity));
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <typeparam name="TDestination"></typeparam>
         /// <typeparam name="TSource"></typeparam>
         /// <param name="context"></param>
         /// <param name="source"></param>
@@ -50,7 +44,7 @@ namespace BetterEntityFramework.Extensions
         /// <param name="notifyFrequency"></param>
         /// <param name="observer"></param>
         /// <returns></returns>
-        public static async Task BulkInsert<TSource,TDestination>(this DbContext context, IQueryable<TSource> source, IQueryable<TDestination> destination, int batchSize = 100000, int timeout = 0, int notifyFrequency = 1000, IObserver<TSource> observer = null)
+        public static async Task BulkInsert<TSource>(this DbContext context, IQueryable<TSource> source, IQueryable destination, int batchSize = 100000, int timeout = 0, int notifyFrequency = 1000, IObserver<TSource> observer = null)
         {
             VerifyDestinationCanReceiveSource(source, destination);
 
@@ -94,7 +88,7 @@ namespace BetterEntityFramework.Extensions
             }
         }
 
-        private static void VerifyDestinationCanReceiveSource<TSource,TDestination>(IQueryable<TSource> source, IQueryable<TDestination> destination)
+        private static void VerifyDestinationCanReceiveSource(IQueryable source, IQueryable destination)
         {
             var sourceFields = source.ElementType.GetProperties();
             var destinationFields = destination.ElementType.GetProperties();

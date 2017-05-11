@@ -2,9 +2,11 @@
 
 namespace BetterEntityFramework
 {
-    internal class DataOptionsBuilder : DbContextOptionsBuilder
+    internal class DataOptionsBuilder
     {
         private static DbContextOptionsBuilder _builder;
+
+        public DbContextOptionsBuilder Builder => _builder;
 
         public DataOptionsBuilder()
         {
@@ -16,9 +18,19 @@ namespace BetterEntityFramework
             _builder = new DbContextOptionsBuilder(options);
         }
 
-        public static DbContextOptions Build()
+        public DbContextOptions Build()
         {
             return _builder.IsConfigured ? _builder.Options : null;
+        }
+
+        public static implicit operator DbContextOptionsBuilder(DataOptionsBuilder builder)
+        {
+            return builder.Builder;
+        }
+
+        public static implicit operator DataOptionsBuilder(DbContextOptionsBuilder builder)
+        {
+            return new DataOptionsBuilder(builder.Options);
         }
     }
 }

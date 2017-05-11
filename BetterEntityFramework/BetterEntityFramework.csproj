@@ -151,7 +151,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataOptionsFactory.cs" />
+    <Compile Include="DataOptionsBuilder.cs" />
     <Compile Include="DataReaders\QueryableDataReader.cs" />
     <Compile Include="DataService.cs" />
     <Compile Include="Extensions\DbContextExtensions.cs" />
@@ -172,6 +172,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <Compile Include="StoreData\EfStoreContext.Customizations.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

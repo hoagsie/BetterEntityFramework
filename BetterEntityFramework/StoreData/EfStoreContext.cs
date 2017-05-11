@@ -1,23 +1,10 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BetterEntityFramework.StoreData
 {
     public partial class EfStoreContext : DbContext
     {
-        private readonly DbContextOptions _options;
-
-        public EfStoreContext()
-        {
-
-        }
-
-        public EfStoreContext(DbContextOptions options) : base(options)
-        {
-            _options = options;
-        }
-
         public virtual DbSet<Category> Category { get; set; }
         public virtual DbSet<CategorySubscription> CategorySubscription { get; set; }
         public virtual DbSet<CategoryTree> CategoryTree { get; set; }
@@ -26,14 +13,6 @@ namespace BetterEntityFramework.StoreData
         public virtual DbSet<ProductSku> ProductSku { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserBasket> UserBasket { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (_options == null)
-            {
-                optionsBuilder.UseSqlServer(@"Server=(local);Database=EfStore;Trusted_Connection=True;");
-            }
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
