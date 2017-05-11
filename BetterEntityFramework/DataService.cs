@@ -21,7 +21,7 @@ namespace BetterEntityFramework
                     return _data;
                 }
 
-                _lastOptions = new DataOptionsBuilder().Build();
+                _lastOptions = _lastOptions ?? new DataOptionsBuilder().Build();
                 _data = new EfStoreContext(_lastOptions);
 
                 return _data;
