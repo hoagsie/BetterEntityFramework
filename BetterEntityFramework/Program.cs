@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Reactive;
 using BetterEntityFramework.Extensions;
 using BetterEntityFramework.StoreData;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +40,12 @@ namespace BetterEntityFramework
                 isolatedOperation.Service.User.DeleteWhere(user => user.Inactive).Wait();
             }
 
-            data.Service.BulkInsert(data.Service.Category.Where(category => category.Publish), data.Service.CategorySubscription).Wait();
+            var observer = Observer.Create<Category>(subscription =>
+            {
+                subscription.Publish = false;
+            });
+
+            data.Service.BulkInsert(data.Service.Category.Where(category => category.Publish), data.Service.CategorySubscription, 10000, 0, 1000, observer).Wait();
             data.Service.ClearCache();
         }
     }
