@@ -54,7 +54,7 @@ namespace BetterEntityFramework.DataReaders
             }
         }
 
-        public override bool HasRows => _queryable.Any();
+        public override bool HasRows => _recordCount > 0 || !_current.Equals(default(T)) || NextResult();
 
         public override bool IsClosed => false;
 
